@@ -8,14 +8,13 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/dslipak/pdf"
 	"github.com/pdfcpu/pdfcpu/pkg/api"
 	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu/model"
 )
 
-func combinePDFs(output string, input []string) error {
+// CombinePDFs combines the specified PDF files into a single PDF file.
 
-	fmt.Println(len(input))
+func combinePDFs(output string, input []string) error {
 
 	config := model.NewDefaultConfiguration()
 	err := api.MergeCreateFile(input, output, false, config)
@@ -26,6 +25,67 @@ func combinePDFs(output string, input []string) error {
 	return nil
 
 }
+
+// RotatePDF90 rotates the first page of the specified PDF file by 90 degrees clockwise.
+// The rotated PDF is saved as a new file with ".rotated.pdf" appended to the original filename.
+//
+// Parameters:
+//   - input: The file path of the PDF to be rotated.
+//
+// Returns:
+//   - error: An error object if the rotation fails, otherwise nil.
+func RotatePDF90(input string, pages []string) error {
+	outputFolder := filepath.Dir(input)
+	temp := strings.Split(input, "/")
+	length := len(temp)
+	outputfile := temp[length-1] + ".rotated.pdf"
+	output := outputFolder + "/" + outputfile
+	fmt.Println(output)
+
+	config := model.NewDefaultConfiguration()
+	err := api.RotateFile(input, output, 90, pages, config)
+	if err != nil {
+		println(err.Error())
+		return err
+	}
+	return nil
+
+}
+
+func rotateFile(input string) error {
+	pagecout, err := api.PageCountFile(input)
+	if err != nil {
+		println(err.Error())
+		return err
+	}
+	pages := make([]string, pagecout)
+	for i := 0; i < pagecout; i++ {
+		pages[i] = fmt.Sprint(i + 1)
+
+	}
+	fmt.Println(pages)
+	err = RotatePDF90(input, pages)
+	if err != nil {
+		println(err.Error())
+		return err
+	}
+	return nil
+
+}
+
+// DOES NOT WORK also not needed
+
+// func MakeLandScape(input string) error {
+// 	config := model.NewDefaultConfiguration()
+
+// 	resize := model.Resize{Scale: 0.0, Unit: types.INCHES, PageDim: &types.Dim{Width: 11.0, Height: 8.5}}
+// 	err := api.ResizeFile(input, "resized"+input, []string{"1"}, &resize, config)
+// 	if err != nil {
+// 		println(err.Error())
+// 		return err
+// 	}
+// 	return nil
+// }
 
 func CombinePDFBasedOnDate(input []PDF, output string) error {
 
@@ -83,41 +143,16 @@ func (p *PDF) string() string {
 	return rstring
 }
 
-func main() {
-
-	var argument string
-
-	args := os.Args[1:]
-	if len(args) == 0 {
-		fmt.Println("No arguments provided.")
-		return
-	}
-	argument = args[0]
-	fmt.Println("Argument:", argument)
+func CombineMainMethod(argument string) {
 
 	var sfpd []PDF
 
-	
-
 	filepath.Walk(argument, func(path string, info os.FileInfo, err error) error {
-		fmt.Println(path)
 
-		if strings.Contains(path, ".pdf") &&  !strings.Contains(path, "CombinedOutput.pdf")  {
+		if strings.Contains(path, ".pdf") && !strings.Contains(path, "CombinedOutput.pdf") {
 
 			fdp := PDF{path: path}
 			sfpd = append(sfpd, fdp)
-
-			reader, err := pdf.Open(path)
-			if err != nil {
-				fmt.Println("Error opening PDF file")
-
-			}
-
-			// numPages := reader.NumPage()
-			// fmt.Println("Number of pages: ", numPages)
-			fmt.Println(GetCreationDate(path))
-
-			println(reader.Outline().Title)
 
 		}
 
@@ -125,22 +160,40 @@ func main() {
 	})
 	for _, pdf := range sfpd {
 		pdf.GetCreationDate()
-		fmt.Println(pdf.string())
 	}
 
 	sort.Slice(sfpd, func(i, j int) bool {
 		return sfpd[i].creationDate < sfpd[j].creationDate
 	})
 
-	fmt.Println("\nSorted\n")
-
-	for _, pdf := range sfpd {
-		fmt.Println(pdf.string())
-	}
-
 	err := CombinePDFBasedOnDate(sfpd, argument+"/CombinedOutput.pdf")
 	if err != nil {
 		fmt.Println(err.Error())
+	}
+
+}
+
+func main() {
+
+	args := os.Args[1:]
+	if len(args) == 0 {
+		fmt.Println("No arguments provided.")
+		return
+	} else if args[0] == "-R" {
+		err := rotateFile(args[1])
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(125)
+		}
+
+		os.Exit(0)
+
+	} else if args[0] == "-CR" {
+		CombineMainMethod(args[1])
+		get := strings.Split(args[1], "/")
+		got := strings.Join(get[:len(get)], "/")
+		rotateFile(got + "/CombinedOutput.pdf")
+
 	}
 
 }
