@@ -60,7 +60,6 @@ def RotateAndCombine():
 root = tk.Tk()
 frm = tk.Frame(root)
 frm.grid()
-tk.Button(frm, text="If there are any issues or question email award@sterlingm.net").grid(row=0, column=0)
 tk.Button(frm, text="Click here to combine PDFs", command=CombinePDF).grid(row=1, column=0)
 tk.Button(frm, text="Click here to rotate PDF", command=RotatePDF).grid(row=2, column=0)
 tk.Button(frm, text="Click here to rotate and combine PDFs", command=RotateAndCombine).grid(row=3, column=0)

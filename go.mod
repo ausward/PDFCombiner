@@ -2,11 +2,7 @@ module example.com
 
 go 1.23.0
 
-require (
-	github.com/dslipak/pdf v0.0.2
-	github.com/gen2brain/go-fitz v1.23.7
-	github.com/pdfcpu/pdfcpu v0.8.1
-)
+require github.com/pdfcpu/pdfcpu v0.8.1
 
 require (
 	github.com/hhrutter/lzw v1.0.0 // indirect
